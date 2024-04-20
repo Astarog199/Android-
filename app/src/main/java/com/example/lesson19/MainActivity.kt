@@ -3,28 +3,26 @@ package com.example.lesson19
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationRequest
 import android.os.Bundle
 import android.os.Looper
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.lesson19.databinding.ActivityMainBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.yandex.mapkit.MapKitFactory
+import com.yandex.mapkit.mapview.MapView
 
+val API_KEY = "cf392e39-1083-4b44-9db4-56b272957353"
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    //объект FusedLocationProviderClient используется для управления запросами местоположения.
     private lateinit var fusedClient: FusedLocationProviderClient
+    private lateinit var mapView: MapView
 
     private val launcher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -36,12 +34,12 @@ class MainActivity : AppCompatActivity() {
 
     private val locationCallback = object : LocationCallback(){
         override fun onLocationResult(result: LocationResult) {
-            binding.message.text = result.locations.toString()
+//            binding.message.text = result.locations.toString()
         }
     }
 
     /**
-     * Получение координат
+     * Получение координат c интервалом в 1 секунду
      */
     @SuppressLint("MissingPermission")
     private fun startLocation() {
@@ -61,21 +59,36 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        fusedClient = LocationServices.getFusedLocationProviderClient(this)
-
+        MapKitFactory.setApiKey(API_KEY)
+        MapKitFactory.initialize(this)
+        mapView = findViewById(R.id.mapview)
     }
 
+    /**
+     * проверяются разрешения на доступ к местоположению пользователя.
+     */
     override fun onStart() {
         super.onStart()
         checkPermissions()
+        MapKitFactory.getInstance().onStart()
+        mapView.onStart()
     }
 
+    /**
+     * отменяются все обновления местоположения, чтобы избежать ненужного использования ресурсов.
+     */
     override fun onStop() {
         super.onStop()
         fusedClient.removeLocationUpdates(locationCallback)
+        MapKitFactory.getInstance().onStop()
+        super.onStop()
     }
 
+
+    /**
+     * Метод проверяет предоставлены ли все необходимые разрешения.
+     * Если нет, то вызывается launcher.launch для запроса разрешений у пользователя.
+     */
     private fun checkPermissions(){
         if (REQUIRED_PERMISSIONS.all { permission->
                 ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED

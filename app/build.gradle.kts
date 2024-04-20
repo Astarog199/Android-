@@ -50,4 +50,5 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     //геопозиционирование
     implementation("com.google.android.gms:play-services-location:21.2.0")
+    implementation ("com.yandex.android:maps.mobile:4.5.1-lite")
 }
